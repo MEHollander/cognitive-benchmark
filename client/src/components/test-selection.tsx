@@ -50,7 +50,7 @@ const tests = [
     iconBg: 'bg-purple-100',
     iconColor: 'text-purple-600',
     description: 'Assesses visual scanning, processing speed, and cognitive flexibility by connecting numbered sequences.',
-    duration: '~4 minutes',
+    duration: '~3 minutes',
   },
   {
     id: 'corsi',
@@ -61,7 +61,7 @@ const tests = [
     iconBg: 'bg-yellow-100',
     iconColor: 'text-yellow-600',
     description: 'Evaluates visuospatial working memory by reproducing sequences of block positions.',
-    duration: '~6 minutes',
+    duration: '~8 minutes',
   },
   {
     id: 'gonogo',

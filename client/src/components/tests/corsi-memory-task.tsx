@@ -23,7 +23,7 @@ export default function CorsiMemoryTask({ onComplete, onExit, participantInfo }:
   const [totalTrials, setTotalTrials] = useState(0);
   
   const maxSequenceLength = 9;
-  const trialsPerLength = 2;
+  const trialsPerLength = 3;
   const blocksCount = 9;
 
   const generateSequence = useCallback((length: number) => {
@@ -96,10 +96,13 @@ export default function CorsiMemoryTask({ onComplete, onExit, participantInfo }:
       setTimeout(() => {
         setCurrentTrial(prev => prev + 1);
         
-        if (currentTrial + 1 >= trialsPerLength) {
-          // Move to next sequence length or end test
-          if (!correct || consecutiveCorrect < trialsPerLength - 1) {
-            // Failed at this length, end test
+        // End test if we've completed 25 trials or reached max length
+        if (totalTrials >= 24) { // 24 because we just added one above
+          setPhase('complete');
+        } else if (currentTrial + 1 >= trialsPerLength) {
+          // Move to next sequence length or end test based on performance
+          if (!correct && consecutiveCorrect === 0) {
+            // Failed completely at this length, end test
             setPhase('complete');
           } else if (sequenceLength >= maxSequenceLength) {
             // Reached max length, end test
@@ -108,6 +111,7 @@ export default function CorsiMemoryTask({ onComplete, onExit, participantInfo }:
             // Move to next length
             setSequenceLength(prev => prev + 1);
             setCurrentTrial(0);
+            setConsecutiveCorrect(0); // Reset for new length
           }
         }
       }, 1500);
@@ -151,7 +155,7 @@ export default function CorsiMemoryTask({ onComplete, onExit, participantInfo }:
                   Sequence Length: <span className="font-bold">{sequenceLength}</span>
                 </span>
                 <span className="text-sm text-gray-600">
-                  Trial <span className="font-bold">{currentTrial + 1}</span> of {trialsPerLength}
+                  Trial <span className="font-bold">{totalTrials + 1}</span> of 25
                 </span>
               </div>
             )}
@@ -168,7 +172,7 @@ export default function CorsiMemoryTask({ onComplete, onExit, participantInfo }:
                   <li>• Watch carefully as the blocks light up in sequence</li>
                   <li>• After the sequence ends, click the blocks in the same order</li>
                   <li>• The sequence will start with 3 blocks and get longer if you succeed</li>
-                  <li>• You need to get 2 trials correct at each length to continue</li>
+                  <li>• The test will continue for approximately 25 trials</li>
                 </ul>
               </div>
               <Button 

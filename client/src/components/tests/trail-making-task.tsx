@@ -34,7 +34,7 @@ export default function TrailMakingTask({ onComplete, onExit, participantInfo }:
     const canvasHeight = 600;
     const margin = 50;
     
-    for (let i = 1; i <= 25; i++) {
+    for (let i = 1; i <= 10; i++) {
       let x, y;
       let attempts = 0;
       
@@ -157,7 +157,7 @@ export default function TrailMakingTask({ onComplete, onExit, participantInfo }:
         );
         setPath(prev => [...prev, { x: clickedPoint.x, y: clickedPoint.y }]);
         
-        if (currentTarget === 25) {
+        if (currentTarget === 10) {
           // Test complete
           const completionTime = Date.now() - startTime;
           setPhase('complete');
@@ -220,7 +220,7 @@ export default function TrailMakingTask({ onComplete, onExit, participantInfo }:
               <div className="bg-purple-50 rounded-lg p-6 mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Instructions</h3>
                 <p className="text-gray-700 mb-4">
-                  You will see numbered circles scattered across the screen. Your task is to connect them in numerical order (1 → 2 → 3 → ... → 25) as quickly and accurately as possible.
+                  You will see numbered circles scattered across the screen. Your task is to connect them in numerical order (1 → 2 → 3 → ... → 10) as quickly and accurately as possible.
                 </p>
                 <ul className="text-left text-gray-700 space-y-2 mb-4">
                   <li>• Click on circle "1" first, then "2", then "3", and so on</li>

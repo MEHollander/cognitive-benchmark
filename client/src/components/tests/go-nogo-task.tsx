@@ -56,7 +56,7 @@ export default function GoNoGoTask({ onComplete, onExit, participantInfo }: GoNo
   const [isPractice, setIsPractice] = useState(false);
   const [accuracy, setAccuracy] = useState(0);
   
-  const totalTrials = 100;
+  const totalTrials = 50;
   const practiceTrials = 20;
   const nogoPercentage = 0.25; // 25% no-go trials
   const [stimulusSequence, setStimulusSequence] = useState<GoNoGoStimulus[]>([]);

@@ -34,7 +34,7 @@ export default function FlankerTask({ onComplete, onExit, participantInfo }: Fla
   const [feedback, setFeedback] = useState('');
   const [isPractice, setIsPractice] = useState(false);
   
-  const totalTrials = 80;
+  const totalTrials = 50;
   const practiceTrials = 10;
   const [stimulusSequence, setStimulusSequence] = useState<FlankerStimulus[]>([]);
 
