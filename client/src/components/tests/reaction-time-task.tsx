@@ -12,7 +12,7 @@ interface ReactionTimeTaskProps {
 }
 
 export default function ReactionTimeTask({ onComplete, onExit, participantInfo }: ReactionTimeTaskProps) {
-  const [phase, setPhase] = useState<'instructions' | 'waiting' | 'stimulus' | 'response' | 'inter_trial' | 'complete'>('instructions');
+  const [phase, setPhase] = useState<'instructions' | 'waiting' | 'stimulus' | 'response' | 'complete'>('instructions');
   const [currentTrial, setCurrentTrial] = useState(0);
   const [trialData, setTrialData] = useState<any[]>([]);
   const [trialStartTime, setTrialStartTime] = useState(0);
@@ -63,13 +63,12 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
         clearTimeout(waitTimeout);
         setWaitTimeout(null);
       }
-      setPhase('inter_trial');
+      setPhase('response');
       setReactionTime(null);
       
       // Wait for inter-trial delay then restart same trial  
       setTimeout(() => {
-        setPhase('waiting');
-        setTimeout(startTrial, 100);
+        startTrial();
       }, interTrialDelay);
       return;
     }
@@ -104,14 +103,14 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
     const avgRT = validRTs.reduce((sum, rt) => sum + rt, 0) / validRTs.length;
     setAverageRT(Math.round(avgRT));
 
-    setPhase('inter_trial');
+    setPhase('response');
     
-    // Wait for inter-trial delay then advance to next trial
+    // Wait for inter-trial delay then start next trial
     setTimeout(() => {
-      setCurrentTrial(prev => prev + 1);
-      if (currentTrial + 1 < totalTrials) {
-        setPhase('waiting');
-        setTimeout(startTrial, 100);
+      const nextTrial = currentTrial + 1;
+      setCurrentTrial(nextTrial);
+      if (nextTrial < totalTrials) {
+        startTrial();
       } else {
         setPhase('complete');
       }
@@ -124,10 +123,7 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
     
     if (currentTrial === 0) {
       // Start first trial
-      const timer = setTimeout(() => {
-        setPhase('waiting');
-        setTimeout(startTrial, 100);
-      }, 1000);
+      const timer = setTimeout(startTrial, 1000);
       return () => clearTimeout(timer);
     }
   }, [phase, currentTrial, startTrial]);
@@ -232,9 +228,9 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
                     {timerDisplay} ms
                   </div>
                 )}
-                {(phase === 'response' || phase === 'inter_trial') && (
+                {phase === 'response' && (
                   <div className="text-4xl font-mono font-bold text-blue-600">
-                    {reactionTime ? `${reactionTime} ms` : 'Recorded'}
+                    {reactionTime ? `${reactionTime} ms` : 'Too Early!'}
                   </div>
                 )}
               </div>
@@ -246,11 +242,11 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
                 {phase === 'stimulus' && showTimer && (
                   <p className="text-red-600 font-semibold">Press SPACEBAR NOW!</p>
                 )}
-                {(phase === 'response' || phase === 'inter_trial') && reactionTime && (
+                {phase === 'response' && reactionTime && (
                   <p className="text-blue-600">Reaction Time: {reactionTime} ms</p>
                 )}
-                {phase === 'inter_trial' && !reactionTime && (
-                  <p className="text-gray-600">Too early! Get ready...</p>
+                {phase === 'response' && !reactionTime && (
+                  <p className="text-red-600">Too early! Get ready...</p>
                 )}
               </div>
 
