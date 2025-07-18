@@ -85,15 +85,14 @@ export default function TrailMakingTask({ onComplete, onExit, participantInfo }:
     
     // Draw points
     points.forEach(point => {
-      const isTarget = point.id === currentTarget;
       const isConnected = point.connected;
       
-      // Circle
+      // Circle - no color hints for next target
       ctx.beginPath();
       ctx.arc(point.x, point.y, 20, 0, 2 * Math.PI);
-      ctx.fillStyle = isConnected ? '#10B981' : isTarget ? '#EF4444' : '#FFFFFF';
+      ctx.fillStyle = isConnected ? '#10B981' : '#FFFFFF';
       ctx.fill();
-      ctx.strokeStyle = isTarget ? '#EF4444' : '#6B7280';
+      ctx.strokeStyle = '#6B7280';
       ctx.lineWidth = 2;
       ctx.stroke();
       
@@ -203,12 +202,12 @@ export default function TrailMakingTask({ onComplete, onExit, participantInfo }:
         <CardContent className="p-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Trail Making Task</h2>
-            <p className="text-gray-600">Part A: Connect numbers 1-25 in ascending order</p>
+            <p className="text-gray-600">Part A: Connect numbers 1-10 in ascending order</p>
             {phase === 'test' && (
               <div className="mt-4">
                 <div className="flex justify-center space-x-8 text-sm text-gray-600">
                   <span>Time: <span className="font-mono text-lg">{formatTime(elapsedTime)}</span></span>
-                  <span>Next: <span className="font-bold text-red-600">{currentTarget}</span></span>
+                  <span>Progress: <span className="font-bold">{currentTarget - 1}/10</span></span>
                   <span>Errors: <span className="font-bold">{errors}</span></span>
                 </div>
               </div>
@@ -252,12 +251,39 @@ export default function TrailMakingTask({ onComplete, onExit, participantInfo }:
               
               <div className="text-center">
                 <p className="text-sm text-gray-600 mb-4">
-                  Click each number in order. Currently looking for: <strong>{currentTarget}</strong>
+                  Click each number in ascending order (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
                 </p>
                 <Button variant="outline" onClick={onExit}>
                   Exit Test
                 </Button>
               </div>
+            </div>
+          )}
+
+          {phase === 'complete' && (
+            <div className="max-w-lg mx-auto text-center">
+              <div className="bg-green-50 rounded-lg p-6 mb-6">
+                <h3 className="text-2xl font-bold text-green-900 mb-4">Test Complete!</h3>
+                <p className="text-green-700 mb-4">
+                  You have successfully completed the Trail Making Task.
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">Completion Time</div>
+                    <div className="text-2xl">{formatTime(Date.now() - startTime)}</div>
+                  </div>
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">Errors</div>
+                    <div className="text-2xl">{errors}</div>
+                  </div>
+                </div>
+              </div>
+              <Button 
+                onClick={onExit}
+                className="bg-primary hover:bg-blue-700"
+              >
+                Return to Home
+              </Button>
             </div>
           )}
         </CardContent>

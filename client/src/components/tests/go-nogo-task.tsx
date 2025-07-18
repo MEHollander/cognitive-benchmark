@@ -12,37 +12,14 @@ interface GoNoGoTaskProps {
 }
 
 type GoNoGoStimulus = {
-  letter: string;
+  display: string;
+  color: string;
   type: 'go' | 'nogo';
 };
 
 const stimuli: GoNoGoStimulus[] = [
-  { letter: 'A', type: 'go' },
-  { letter: 'B', type: 'go' },
-  { letter: 'C', type: 'go' },
-  { letter: 'D', type: 'go' },
-  { letter: 'E', type: 'go' },
-  { letter: 'F', type: 'go' },
-  { letter: 'G', type: 'go' },
-  { letter: 'H', type: 'go' },
-  { letter: 'I', type: 'go' },
-  { letter: 'J', type: 'go' },
-  { letter: 'K', type: 'go' },
-  { letter: 'L', type: 'go' },
-  { letter: 'M', type: 'go' },
-  { letter: 'N', type: 'go' },
-  { letter: 'O', type: 'go' },
-  { letter: 'P', type: 'go' },
-  { letter: 'Q', type: 'go' },
-  { letter: 'R', type: 'go' },
-  { letter: 'S', type: 'go' },
-  { letter: 'T', type: 'go' },
-  { letter: 'U', type: 'go' },
-  { letter: 'V', type: 'go' },
-  { letter: 'W', type: 'go' },
-  { letter: 'Y', type: 'go' },
-  { letter: 'Z', type: 'go' },
-  { letter: 'X', type: 'nogo' }, // X is the no-go stimulus
+  { display: 'GO', color: '#22c55e', type: 'go' }, // Green
+  { display: 'NO-GO', color: '#ef4444', type: 'nogo' }, // Red
 ];
 
 export default function GoNoGoTask({ onComplete, onExit, participantInfo }: GoNoGoTaskProps) {
@@ -72,12 +49,12 @@ export default function GoNoGoTask({ onComplete, onExit, participantInfo }: GoNo
     
     // Add go trials
     for (let i = 0; i < goCount; i++) {
-      sequence.push(goStimuli[Math.floor(Math.random() * goStimuli.length)]);
+      sequence.push(goStimuli[0]);
     }
     
     // Add no-go trials
     for (let i = 0; i < nogoCount; i++) {
-      sequence.push(nogoStimuli[0]); // Always use 'X' for no-go
+      sequence.push(nogoStimuli[0]);
     }
     
     // Shuffle the sequence
@@ -125,7 +102,7 @@ export default function GoNoGoTask({ onComplete, onExit, participantInfo }: GoNo
             const trial = {
               testType: 'gonogo',
               trialNumber: currentTrial + 1,
-              stimulus: currentStimulus.letter,
+              stimulus: currentStimulus.display,
               response: 'no_response',
               reactionTime: null,
               accuracy: correct ? 1 : 0,
@@ -153,7 +130,7 @@ export default function GoNoGoTask({ onComplete, onExit, participantInfo }: GoNo
       const trial = {
         testType: 'gonogo',
         trialNumber: currentTrial + 1,
-        stimulus: currentStimulus.letter,
+        stimulus: currentStimulus.display,
         response: 'spacebar',
         reactionTime: Math.round(reactionTime),
         accuracy: correct ? 1 : 0,
@@ -234,26 +211,26 @@ export default function GoNoGoTask({ onComplete, onExit, participantInfo }: GoNo
               <div className="bg-red-50 rounded-lg p-6 mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Instructions</h3>
                 <p className="text-gray-700 mb-4">
-                  Letters will appear on the screen one at a time. Your task is to respond quickly to most letters, but withhold your response when you see the letter <strong>X</strong>.
+                  Signs will appear on the screen one at a time. Your task is to respond quickly to GO signs, but withhold your response when you see NO-GO signs.
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="bg-green-50 rounded-lg p-4">
                     <h4 className="font-semibold text-green-700 mb-2">GO Trials</h4>
                     <p className="text-sm text-gray-600">
-                      Press <kbd className="bg-gray-200 px-2 py-1 rounded">SPACEBAR</kbd> when you see any letter <strong>except X</strong>
+                      Press <kbd className="bg-gray-200 px-2 py-1 rounded">SPACEBAR</kbd> when you see a <strong style={{color: '#22c55e'}}>GREEN GO</strong> sign
                     </p>
                   </div>
                   <div className="bg-red-50 rounded-lg p-4">
                     <h4 className="font-semibold text-red-700 mb-2">NO-GO Trials</h4>
                     <p className="text-sm text-gray-600">
-                      Do <strong>NOT</strong> press anything when you see the letter <strong>X</strong>
+                      Do <strong>NOT</strong> press anything when you see a <strong style={{color: '#ef4444'}}>RED NO-GO</strong> sign
                     </p>
                   </div>
                 </div>
                 
                 <p className="text-sm text-gray-600">
-                  Respond as quickly and accurately as possible. Each letter appears for only 1 second.
+                  Respond as quickly and accurately as possible. Each sign appears for only 1 second.
                 </p>
               </div>
               <Button 
@@ -273,7 +250,16 @@ export default function GoNoGoTask({ onComplete, onExit, participantInfo }: GoNo
             <div className="max-w-lg mx-auto text-center">
               <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center mb-6">
                 {showStimulus && currentStimulus && (
-                  <div className="text-8xl font-bold">{currentStimulus.letter}</div>
+                  <div 
+                    className="text-6xl font-bold px-8 py-4 rounded-lg border-4"
+                    style={{ 
+                      color: currentStimulus.color,
+                      borderColor: currentStimulus.color,
+                      backgroundColor: `${currentStimulus.color}20`
+                    }}
+                  >
+                    {currentStimulus.display}
+                  </div>
                 )}
                 {!showStimulus && (
                   <div className="text-4xl text-gray-400">+</div>
@@ -313,6 +299,37 @@ export default function GoNoGoTask({ onComplete, onExit, participantInfo }: GoNo
                   </Button>
                 </div>
               )}
+            </div>
+          )}
+
+          {phase === 'complete' && (
+            <div className="max-w-lg mx-auto text-center">
+              <div className="bg-green-50 rounded-lg p-6 mb-6">
+                <h3 className="text-2xl font-bold text-green-900 mb-4">Test Complete!</h3>
+                <p className="text-green-700 mb-4">
+                  You have successfully completed the Go/No-Go Task.
+                </p>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">Total Trials</div>
+                    <div className="text-2xl">{trialData.length}</div>
+                  </div>
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">Accuracy</div>
+                    <div className="text-2xl">{accuracy}%</div>
+                  </div>
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">Go Trials</div>
+                    <div className="text-2xl">{trialData.filter(t => t.stimulus?.includes('GO')).length}</div>
+                  </div>
+                </div>
+              </div>
+              <Button 
+                onClick={onExit}
+                className="bg-primary hover:bg-blue-700"
+              >
+                Return to Home
+              </Button>
             </div>
           )}
         </CardContent>

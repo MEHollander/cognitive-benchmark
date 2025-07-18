@@ -18,6 +18,7 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
   const [trialStartTime, setTrialStartTime] = useState(0);
   const [reactionTime, setReactionTime] = useState<number | null>(null);
   const [averageRT, setAverageRT] = useState(0);
+  const [falseStarts, setFalseStarts] = useState(0);
   const [waitTimeout, setWaitTimeout] = useState<NodeJS.Timeout | null>(null);
   const [showTimer, setShowTimer] = useState(false);
   const [timerDisplay, setTimerDisplay] = useState(0);
@@ -65,6 +66,20 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
       }
       setPhase('response');
       setReactionTime(null);
+      setFalseStarts(prev => prev + 1);
+      
+      // Record false start as trial data
+      const trial = {
+        testType: 'reaction',
+        trialNumber: currentTrial + 1,
+        stimulus: 'false_start',
+        response: 'spacebar',
+        reactionTime: -1,
+        accuracy: 0,
+        timestamp: new Date().toISOString(),
+      };
+      
+      setTrialData(prev => [...prev, trial]);
       
       // Wait for inter-trial delay then restart same trial  
       setTimeout(() => {
@@ -262,6 +277,37 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
 
               <Button variant="outline" onClick={onExit}>
                 Exit Test
+              </Button>
+            </div>
+          )}
+
+          {phase === 'complete' && (
+            <div className="max-w-lg mx-auto text-center">
+              <div className="bg-green-50 rounded-lg p-6 mb-6">
+                <h3 className="text-2xl font-bold text-green-900 mb-4">Test Complete!</h3>
+                <p className="text-green-700 mb-4">
+                  You have successfully completed the Simple Reaction Time Task.
+                </p>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">Valid Trials</div>
+                    <div className="text-2xl">{trialData.filter(t => t.accuracy === 1).length}</div>
+                  </div>
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">Average RT</div>
+                    <div className="text-2xl">{averageRT} ms</div>
+                  </div>
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">False Starts</div>
+                    <div className="text-2xl">{falseStarts}</div>
+                  </div>
+                </div>
+              </div>
+              <Button 
+                onClick={onExit}
+                className="bg-primary hover:bg-blue-700"
+              >
+                Return to Home
               </Button>
             </div>
           )}

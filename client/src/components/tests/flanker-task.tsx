@@ -33,6 +33,7 @@ export default function FlankerTask({ onComplete, onExit, participantInfo }: Fla
   const [trialStartTime, setTrialStartTime] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [isPractice, setIsPractice] = useState(false);
+  const [accuracy, setAccuracy] = useState(0);
   
   const totalTrials = 50;
   const practiceTrials = 10;
@@ -124,6 +125,10 @@ export default function FlankerTask({ onComplete, onExit, participantInfo }: Fla
 
   useEffect(() => {
     if (phase === 'complete') {
+      const correctTrials = trialData.filter(t => t.accuracy === 1).length;
+      const acc = trialData.length > 0 ? Math.round((correctTrials / trialData.length) * 100) : 0;
+      setAccuracy(acc);
+      
       const metrics = calculateTestMetrics(trialData);
       onComplete({
         testType: 'flanker',
@@ -200,7 +205,7 @@ export default function FlankerTask({ onComplete, onExit, participantInfo }: Fla
                 <p className="text-sm text-gray-600">Focus on the center arrow</p>
               </div>
               
-              <div className="text-center mb-4 h-8">
+              <div className="text-center mb-4 h-8 flex items-center justify-center">
                 {feedback && (
                   <span className={`text-lg font-medium ${
                     feedback === 'Correct!' ? 'text-green-600' : 'text-red-600'
@@ -231,6 +236,33 @@ export default function FlankerTask({ onComplete, onExit, participantInfo }: Fla
                   </Button>
                 </div>
               )}
+            </div>
+          )}
+
+          {phase === 'complete' && (
+            <div className="max-w-lg mx-auto text-center">
+              <div className="bg-green-50 rounded-lg p-6 mb-6">
+                <h3 className="text-2xl font-bold text-green-900 mb-4">Test Complete!</h3>
+                <p className="text-green-700 mb-4">
+                  You have successfully completed the Flanker Task.
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">Total Trials</div>
+                    <div className="text-2xl">{trialData.length}</div>
+                  </div>
+                  <div className="bg-white rounded p-3">
+                    <div className="font-semibold">Accuracy</div>
+                    <div className="text-2xl">{accuracy}%</div>
+                  </div>
+                </div>
+              </div>
+              <Button 
+                onClick={onExit}
+                className="bg-primary hover:bg-blue-700"
+              >
+                Return to Home
+              </Button>
             </div>
           )}
         </CardContent>
