@@ -12,14 +12,19 @@ interface ReactionTimeTaskProps {
 }
 
 export default function ReactionTimeTask({ onComplete, onExit, participantInfo }: ReactionTimeTaskProps) {
-  const [phase, setPhase] = useState<'instructions' | 'waiting' | 'stimulus' | 'response' | 'complete'>('instructions');
+  const [phase, setPhase] = useState<'instructions' | 'waiting' | 'stimulus' | 'response' | 'inter_trial' | 'complete'>('instructions');
   const [currentTrial, setCurrentTrial] = useState(0);
   const [trialData, setTrialData] = useState<any[]>([]);
   const [trialStartTime, setTrialStartTime] = useState(0);
+  const [reactionTime, setReactionTime] = useState<number | null>(null);
   const [averageRT, setAverageRT] = useState(0);
   const [waitTimeout, setWaitTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [showTimer, setShowTimer] = useState(false);
+  const [timerDisplay, setTimerDisplay] = useState(0);
+  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
   
   const totalTrials = 50;
+  const interTrialDelay = 2000; // 2 seconds between trials
 
   const startTrial = useCallback(() => {
     if (currentTrial >= totalTrials) {
@@ -28,12 +33,24 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
     }
 
     setPhase('waiting');
+    setShowTimer(false);
+    setReactionTime(null);
     
-    // Random delay between 1-4 seconds
-    const delay = 1000 + Math.random() * 3000;
+    // Random delay between 1-5 seconds
+    const delay = 1000 + Math.random() * 4000;
     const timeout = setTimeout(() => {
+      const stimulusStartTime = performance.now();
       setPhase('stimulus');
-      setTrialStartTime(performance.now());
+      setTrialStartTime(stimulusStartTime);
+      setShowTimer(true);
+      setTimerDisplay(0);
+      
+      // Update timer display in real time
+      const interval = setInterval(() => {
+        const elapsed = performance.now() - stimulusStartTime;
+        setTimerDisplay(Math.floor(elapsed));
+      }, 10);
+      setTimerInterval(interval);
     }, delay);
     
     setWaitTimeout(timeout);
@@ -41,28 +58,40 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
 
   const handleResponse = useCallback(() => {
     if (phase === 'waiting') {
-      // Too early response
+      // Too early response - restart this trial
       if (waitTimeout) {
         clearTimeout(waitTimeout);
         setWaitTimeout(null);
       }
       setPhase('response');
+      setReactionTime(null);
+      
+      // Wait for inter-trial delay then restart same trial
       setTimeout(() => {
-        setCurrentTrial(prev => prev + 1);
-      }, 1500);
+        setPhase('waiting');
+        startTrial();
+      }, interTrialDelay);
       return;
     }
 
     if (phase !== 'stimulus') return;
 
-    const reactionTime = performance.now() - trialStartTime;
+    const rt = performance.now() - trialStartTime;
+    setReactionTime(Math.round(rt));
+    setShowTimer(false);
+    
+    // Clear timer interval
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      setTimerInterval(null);
+    }
     
     const trial = {
       testType: 'reaction',
       trialNumber: currentTrial + 1,
-      stimulus: 'green_circle',
+      stimulus: 'timer_target',
       response: 'spacebar',
-      reactionTime: Math.round(reactionTime),
+      reactionTime: Math.round(rt),
       accuracy: 1,
       timestamp: new Date().toISOString(),
     };
@@ -76,17 +105,30 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
     setAverageRT(Math.round(avgRT));
 
     setPhase('response');
+    
+    // Wait for inter-trial delay then move to next trial
     setTimeout(() => {
       setCurrentTrial(prev => prev + 1);
-    }, 1000);
-  }, [phase, trialStartTime, currentTrial, trialData, waitTimeout]);
+    }, interTrialDelay);
+  }, [phase, trialStartTime, currentTrial, trialData, waitTimeout, interTrialDelay, startTrial, timerInterval]);
 
   useEffect(() => {
-    if (phase === 'waiting' || phase === 'stimulus') {
-      const timer = setTimeout(startTrial, phase === 'response' ? 1500 : 0);
+    if (phase === 'instructions') return;
+    
+    if (currentTrial === 0 && phase !== 'complete') {
+      // Start first trial
+      const timer = setTimeout(startTrial, 1000);
       return () => clearTimeout(timer);
     }
   }, [phase, currentTrial, startTrial]);
+
+  // Cleanup intervals on unmount
+  useEffect(() => {
+    return () => {
+      if (waitTimeout) clearTimeout(waitTimeout);
+      if (timerInterval) clearInterval(timerInterval);
+    };
+  }, [waitTimeout, timerInterval]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -137,18 +179,22 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
               <div className="bg-green-50 rounded-lg p-6 mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Instructions</h3>
                 <p className="text-gray-700 mb-4">
-                  A gray circle will appear on the screen. When it turns <strong>green</strong>, press the spacebar as quickly as possible.
+                  A plus sign (+) will appear on the screen. After a random delay, a <strong>timer</strong> will start counting up in milliseconds. Press the spacebar as quickly as possible when the timer appears.
                 </p>
                 <p className="text-gray-700 mb-4">
-                  Wait for the circle to turn green before responding. If you respond too early, the trial will restart.
+                  Wait for the timer to appear before responding. If you respond too early, the trial will restart. The timer freezes at your reaction time.
                 </p>
                 <div className="flex justify-center space-x-8 mb-4">
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-gray-300 rounded-full mx-auto mb-2"></div>
+                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <span className="text-2xl font-bold text-gray-600">+</span>
+                    </div>
                     <p className="text-sm">Wait...</p>
                   </div>
                   <div className="text-center">
-                    <div className="w-16 h-16 bg-green-500 rounded-full mx-auto mb-2"></div>
+                    <div className="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <span className="text-xs font-mono text-red-600">000ms</span>
+                    </div>
                     <p className="text-sm">Press <kbd className="bg-gray-200 px-2 py-1 rounded">SPACE</kbd></p>
                   </div>
                 </div>
@@ -168,27 +214,38 @@ export default function ReactionTimeTask({ onComplete, onExit, participantInfo }
           {(phase === 'waiting' || phase === 'stimulus' || phase === 'response') && (
             <div className="max-w-lg mx-auto text-center">
               <div className="bg-gray-100 rounded-lg h-64 flex items-center justify-center mb-6">
-                <div 
-                  className={`w-20 h-20 rounded-full transition-colors duration-200 ${
-                    phase === 'stimulus' ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
-                />
+                {phase === 'waiting' && (
+                  <div className="text-6xl font-bold text-gray-600">+</div>
+                )}
+                {phase === 'stimulus' && showTimer && (
+                  <div className="text-4xl font-mono font-bold text-red-600">
+                    {timerDisplay} ms
+                  </div>
+                )}
+                {phase === 'response' && (
+                  <div className="text-4xl font-mono font-bold text-blue-600">
+                    {reactionTime} ms
+                  </div>
+                )}
+                {phase === 'inter_trial' && (
+                  <div className="text-4xl text-gray-400">Get Ready...</div>
+                )}
               </div>
               
               <div className="text-center mb-4 h-8">
                 {phase === 'waiting' && (
-                  <p className="text-gray-600">Wait for green...</p>
+                  <p className="text-gray-600">Wait for the timer...</p>
                 )}
-                {phase === 'stimulus' && (
-                  <p className="text-green-600 font-semibold">Press SPACEBAR NOW!</p>
+                {phase === 'stimulus' && showTimer && (
+                  <p className="text-red-600 font-semibold">Press SPACEBAR NOW!</p>
                 )}
-                {phase === 'response' && currentTrial > 0 && (
-                  <p className="text-blue-600">Response recorded</p>
+                {phase === 'response' && reactionTime && (
+                  <p className="text-blue-600">Reaction Time: {reactionTime} ms</p>
                 )}
               </div>
 
               <p className="text-gray-600 mb-4">
-                Press <kbd className="bg-gray-200 px-3 py-1 rounded">SPACEBAR</kbd> when the circle turns green
+                Press <kbd className="bg-gray-200 px-3 py-1 rounded">SPACEBAR</kbd> when the timer appears
               </p>
               
               <div className="text-center mb-4">
